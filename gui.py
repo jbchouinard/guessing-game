@@ -16,6 +16,7 @@ class GamePainter:
 
     colors = defaultdict(lambda: 'black',
     {
+        # Pegs
         0: 'white',
         1: 'red',
         2: 'yellow',
@@ -23,6 +24,10 @@ class GamePainter:
         4: 'blue',
         5: 'orange',
         6: 'purple',
+        # Mini pegs
+        'correct': 'black',
+        'incorrect': 'white',
+        'missing': 'grey',
     })
 
     def __init__(self, game, frame):
@@ -37,7 +42,7 @@ class GamePainter:
         self.show_solution = False
 
     def _compute_canvas_size(self):
-        mini = (self.game.n // 4) + 1
+        mini = ((self.game.n-1) // 4) + 1
         cv_height = 2 * self.y0 + (self.height + self.y_pad) * (self.game.tries + 1)
         cv_width = 2 * self.x0 + (self.width + self.x_pad) * (self.game.n + mini)
         return cv_height, cv_width
@@ -61,24 +66,43 @@ class GamePainter:
         y1 = y0 + self.height
         self.canvas.create_oval(x0, y0, x1, y1, fill=color)
 
-    def paint_mini_pegs(self, row, col, colors):
-        """ Paint a mini-peg at given position. """
-        pass
+    def paint_mini_pegs(self, row, col, values):
+        """ Paint mini-pegs at given position. """
+        x0 = self.x0 + (self.width + self.x_pad) * col
+        y0 = self.y0 + (self.height + self.y_pad) * row
+        x_pad = self.width * 0.2
+        y_pad = self.height * 0.2
+        w = self.width * 0.4
+        h = self.height * 0.4
+        n = len(values)
+        ncol = (n+1) // 2
+        for i in range(n):
+            row = i % ncol
+            col = i // ncol
+            x = x0 + (w + x_pad) * row
+            y = y0 + (h + y_pad) * col
+            col = self.colors[values[i]]
+            self.canvas.create_oval(x, y, x+w, y+h, fill=col)
 
     def paint_hline(self, row, col0, col1, color):
-        pass
-
-    def paint_vline(self, row, col0, col1, color):
-        pass
+        x0 = self.x0 + (self.width + self.x_pad) * col0
+        x1 = x0 + (self.width + self.x_pad) * (col1 - col0)
+        y0 = self.y0 + (self.height + self.y_pad) * row - (self.y_pad / 2)
+        self.canvas.create_line(x0, y0, x1, y0, fill=color)
 
     def paint(self):
         self.canvas.delete('all')
 
         # Paint guesses
         for i in range(len(self.game.guesses)):
-            guess = self.game.guesses[i][0]
+            guess, response = self.game.guesses[i]
             for j in range(len(guess)):
                 self.paint_peg(i, j, self.colors[guess[j]])
+            a1 = response['correct']
+            a2 = response['incorrect']
+            a3 = self.game.n - a1 - a2
+            vals = ['correct'] * a1 + ['incorrect'] * a2 + ['missing'] * a3
+            self.paint_mini_pegs(i, self.game.n, vals)
 
         # Paint entry
         i = len(self.game.guesses)
@@ -89,6 +113,7 @@ class GamePainter:
         for i in range(len(self.game.guesses) + 1, self.game.tries):
             for j in range(self.game.n):
                 self.paint_peg(i, j, 'grey')
+            self.paint_mini_pegs(i, self.game.n, ['missing'] * self.game.n)
 
         self.paint_hline(self.game.tries, 0, self.game.n, 'black')
 
@@ -103,10 +128,6 @@ class GamePainter:
 if __name__ == '__main__':
     root = Tk()
     game = Game()
-
-    # For testing
-    game.guess([1, 2, 3, 4])
-    game.guess([4, 3, 2, 1])
 
     # Game display
     game_frame = Frame(root)
