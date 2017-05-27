@@ -25,3 +25,10 @@ class Game:
         response['incorrect'] = len(list(incorrect.elements()))
         self.guesses.append((guess, response))
         return response
+
+    @property
+    def solved(self):
+        if self.guesses:
+            return self.guesses[-1][0] == self.solution
+        else:
+            return False
