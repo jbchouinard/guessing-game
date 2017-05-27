@@ -2,6 +2,30 @@ from collections import Counter
 from random import randint
 
 
+class GameFinished(Exception):
+    pass
+
+try:
+    import pyximport
+    pyximport.install()
+    from fastcheck import check
+except ImportError:
+    def check(colors, guess, solution):
+        count_guess = [0] * colors
+        count_soln = [0] * colors
+        correct = 0
+        for (color_guessed, color_actual) in zip(guess, solution):
+            if color_guessed == color_actual:
+                correct += 1
+            else:
+                count_guess[color_guessed-1] += 1
+                count_soln[color_actual-1] += 1
+            incorrect = 0
+        for (c1, c2) in zip(count_guess, count_soln):
+            incorrect += min(c1, c2)
+        return (correct, incorrect)
+
+
 class Game:
     def __init__(self, n=4, colors=6, tries=10):
         self.n = n
@@ -11,24 +35,20 @@ class Game:
         self.guesses = []
 
     def guess(self, guess):
-        response = {'correct': 0}
-        not_matched_guess = []
-        not_matched_target = []
-        for i in range(self.n):
-            if guess[i] == self.solution[i]:
-                response['correct'] += 1
-            else:
-                not_matched_guess.append(guess[i])
-                not_matched_target.append(self.solution[i])
-
-        incorrect = Counter(not_matched_guess) & Counter(not_matched_target)
-        response['incorrect'] = len(list(incorrect.elements()))
+        if self.state != 'open':
+            raise GameFinished
+        response = check(self.colors, guess, self.solution)
         self.guesses.append((guess, response))
         return response
 
+    def restart(self):
+        self.guesses = []
+
     @property
-    def solved(self):
-        if self.guesses:
-            return self.guesses[-1][0] == self.solution
+    def state(self):
+        if self.guesses and self.guesses[-1][0] == self.solution:
+            return 'solved'
+        elif len(self.guesses) < self.tries:
+            return 'open'
         else:
-            return False
+            return 'failed'
