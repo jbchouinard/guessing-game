@@ -22,7 +22,7 @@ options = {
 }
 
 
-class GamePainter:
+class GameWidget:
     # Peg geometry
     width = sx(30)
     height = sy(30)
@@ -95,8 +95,8 @@ class GamePainter:
         y = self.y0 + (self.height + self.y_pad) * row
         return x, y
 
-    def paint_peg(self, row, col, color, canvas=None):
-        """ Paint a peg at given position. """
+    def draw_peg(self, row, col, color, canvas=None):
+        """ draw a peg at given position. """
         if canvas is None:
             canvas = self.canvas
         x0, y0 = self.get_coords(row, col)
@@ -104,8 +104,8 @@ class GamePainter:
         y1 = y0 + self.height
         return canvas.create_oval(x0, y0, x1, y1, fill=color)
 
-    def paint_mini_pegs(self, row, col, values):
-        """ Paint mini-pegs at given position. """
+    def draw_mini_pegs(self, row, col, values):
+        """ draw mini-pegs at given position. """
         x0, y0 = self.get_coords(row, col)
         x_pad = self.width * 0.2
         y_pad = self.height * 0.2
@@ -121,23 +121,23 @@ class GamePainter:
             col = self.colors[values[i]]
             self.canvas.create_oval(x, y, x+w, y+h, fill=col)
 
-    def paint_legend(self):
+    def draw_legend(self):
         for i in range(self.game.colors):
-            id = self.paint_peg(i, 0, self.colors[i+1], canvas=self.canvas_legend)
+            id = self.draw_peg(i, 0, self.colors[i+1], canvas=self.canvas_legend)
             self.canvas_legend.tag_bind(id, '<ButtonPress-1>', self.on_legend_click)
 
     def submit_guess(self):
         self.game.guess(self.current_guess)
         self.current_guess = [0] * self.game.n
-        self.paint()
+        self.draw()
 
-    def paint_hline(self, row, col0, col1, color):
+    def draw_hline(self, row, col0, col1, color):
         x0, y0 = self.get_coords(row, col0)
         y0 -= self.y_pad / 2
         x1 = x0 + (self.width + self.x_pad) * (col1 - col0)
         self.canvas.create_line(x0, y0, x1, y0, fill=color)
 
-    def paint_entries(self):
+    def draw_entries(self):
         if self.entries:
             for entry in self.entries.keys():
                 self.canvas.delete(entry)
@@ -145,11 +145,11 @@ class GamePainter:
         i = len(self.game.guesses)
         for j in range(self.game.n):
             color = self.colors[self.current_guess[j]]
-            id = self.paint_peg(i, j, color)
+            id = self.draw_peg(i, j, color)
             self.canvas.tag_bind(id, '<ButtonPress-1>', self.on_entry_click)
             self.entries[id] = j
 
-    def paint_ok_button(self):
+    def draw_ok_button(self):
         if self.button_ok:
             self.button_ok.destroy()
         i = len(self.game.guesses)
@@ -159,21 +159,21 @@ class GamePainter:
         self.button_ok = Button(self.frame, text='OK', command=self.submit_guess)
         self.canvas.create_window(x, y, anchor=N+W, window=self.button_ok)
 
-    def paint(self):
+    def draw(self):
         self.canvas.delete('all')
 
-        # Paint previous guesses
+        # draw previous guesses
         for i in range(len(self.game.guesses)):
             guess, response = self.game.guesses[i]
             for j in range(len(guess)):
-                self.paint_peg(i, j, self.colors[guess[j]])
+                self.draw_peg(i, j, self.colors[guess[j]])
             a1 = response[0]
             a2 = response[1]
             a3 = self.game.n - a1 - a2
             vals = ['correct'] * a1 + ['incorrect'] * a2 + ['missing'] * a3
-            self.paint_mini_pegs(i, self.game.n, vals)
+            self.draw_mini_pegs(i, self.game.n, vals)
 
-        # Paint current guess
+        # draw current guess
         i = len(self.game.guesses)
         if self.game.state != 'open':
             self.show_solution = True
@@ -181,26 +181,26 @@ class GamePainter:
         if i < self.game.tries:
             if self.show_solution:
                 for j in range(self.game.n):
-                    self.paint_peg(i, j, 'grey')
-                self.paint_mini_pegs(i, self.game.n, ['missing'] * self.game.n)
+                    self.draw_peg(i, j, 'grey')
+                self.draw_mini_pegs(i, self.game.n, ['missing'] * self.game.n)
             else:
-                self.paint_entries()
-                self.paint_ok_button()
+                self.draw_entries()
+                self.draw_ok_button()
 
-        # Paint empty guesses remaining
+        # draw empty guesses remaining
         for i in range(len(self.game.guesses) + 1, self.game.tries):
             for j in range(self.game.n):
-                self.paint_peg(i, j, 'grey')
-            self.paint_mini_pegs(i, self.game.n, ['missing'] * self.game.n)
+                self.draw_peg(i, j, 'grey')
+            self.draw_mini_pegs(i, self.game.n, ['missing'] * self.game.n)
 
-        self.paint_hline(self.game.tries, 0, self.game.n, 'black')
+        self.draw_hline(self.game.tries, 0, self.game.n, 'black')
 
-        # Paint solution
+        # draw solution
         sol = self.show_solution
         i = self.game.tries
         for j in range(self.game.n):
             color = self.colors[self.game.solution[j]] if sol else 'grey'
-            self.paint_peg(i, j, color)
+            self.draw_peg(i, j, color)
 
     def on_legend_click(self, event):
         w = event.widget.find_closest(event.x, event.y)
@@ -209,7 +209,7 @@ class GamePainter:
     def on_entry_click(self, event):
         entry_id = event.widget.find_closest(event.x, event.y)[0]
         self.current_guess[self.entries[entry_id]] = self.cursor_color
-        self.paint_entries()
+        self.draw_entries()
 
 
 if __name__ == '__main__':
@@ -219,52 +219,55 @@ if __name__ == '__main__':
     # Game display
     game_frame = Frame(root)
     legend_frame = Frame(root)
-    game_painter = GamePainter(game, game_frame, legend_frame)
-    game_painter.paint()
-    game_painter.paint_legend()
+    game_widget = GameWidget(game, game_frame, legend_frame)
+    game_widget.draw()
+    game_widget.draw_legend()
 
     def new_game():
-        game_painter.set_game(Game(**options))
-        game_painter.reset_canvas()
-        game_painter.paint()
+        game_widget.set_game(Game(**options))
+        game_widget.reset_canvas()
+        game_widget.draw()
 
     def restart():
-        game_painter.game.restart()
-        game_painter.paint()
+        game_widget.game.restart()
+        game_widget.show_solution = False
+        game_widget.draw()
 
     def show_solution():
-        game_painter.show_solution = True
-        game_painter.paint()
+        game_widget.show_solution = True
+        game_widget.draw()
 
     def solve(mode):
         def solve_f():
-            game = game_painter.game
-            if game_painter.button_ok:
-                game_painter.button_ok.destroy()
+            game = game_widget.game
+            if game_widget.button_ok:
+                game_widget.button_ok.destroy()
             solver = Solver(game)
             while game.state == 'open':
                 solver.guess(mode=mode)
-                game_painter.paint()
+                game_widget.draw()
         return solve_f
 
     # Menu
     menu = Frame(root)
     button_new_game = Button(menu, text='New Game', width=sx(20), command=new_game)
     button_restart = Button(menu, text='Restart', width=sx(20), command=restart)
-    button_quit = Button(menu, text='Quit', width=sx(20), command=quit)
     button_solution = Button(menu, text='Show Solution', width=sx(20), command=show_solution)
     button_solve_fast = Button(menu, text='Solve (Fast)', width=sx(20), command=solve('fast'))
     button_solve_best = Button(menu, text='Solve (Best)', width=sx(20), command=solve('best'))
+    button_quit = Button(menu, text='Quit', width=sx(20), command=quit)
 
-    # Layout
+    # Frames Layout
     menu.grid(row=0, column=0, sticky=N+W, pady=sy(20), padx=sx(20))
+    legend_frame.grid(row=1, column=0, sticky=N+E, pady=sy(20), padx=sx(20))
+    game_frame.grid(row=0, column=1, rowspan=2)
+
+    # Menu Layout
     button_new_game.grid(row=0, column=0, sticky=N+W)
     button_restart.grid(row=1, column=0, sticky=N+W)
     button_solution.grid(row=2, column=0, sticky=N+W)
     button_solve_fast.grid(row=3, column=0, sticky=N+W)
     button_solve_best.grid(row=4, column=0, sticky=N+W)
     button_quit.grid(row=5, column=0, sticky=N+W)
-    legend_frame.grid(row=1, column=0, sticky=N+E, pady=sy(20), padx=sx(20))
-    game_frame.grid(row=0, column=1, rowspan=2)
 
     root.mainloop()
