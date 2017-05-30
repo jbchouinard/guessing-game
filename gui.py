@@ -237,14 +237,14 @@ if __name__ == '__main__':
         game_widget.show_solution = True
         game_widget.draw()
 
-    def solve(mode):
+    def solve(treshold):
         def solve_f():
             game = game_widget.game
             if game_widget.button_ok:
                 game_widget.button_ok.destroy()
             solver = Solver(game)
             while game.state == 'open':
-                solver.guess(mode=mode)
+                solver.guess(treshold)
                 game_widget.draw()
         return solve_f
 
@@ -253,8 +253,8 @@ if __name__ == '__main__':
     button_new_game = Button(menu, text='New Game', width=sx(20), command=new_game)
     button_restart = Button(menu, text='Restart', width=sx(20), command=restart)
     button_solution = Button(menu, text='Show Solution', width=sx(20), command=show_solution)
-    button_solve_fast = Button(menu, text='Solve (Fast)', width=sx(20), command=solve('fast'))
-    button_solve_best = Button(menu, text='Solve (Best)', width=sx(20), command=solve('best'))
+    button_solve_fast = Button(menu, text='Solve (Fast)', width=sx(20), command=solve(0.5))
+    button_solve_best = Button(menu, text='Solve (Best)', width=sx(20), command=solve(0))
     button_quit = Button(menu, text='Quit', width=sx(20), command=quit)
 
     # Frames Layout

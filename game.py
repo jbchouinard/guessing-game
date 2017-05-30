@@ -9,6 +9,7 @@ try:
     import pyximport
     pyximport.install()
     from fastcheck import check
+    print('Using fast check function.')
 except ImportError:
     def check(colors, guess, solution):
         count_guess = [0] * colors
@@ -24,6 +25,8 @@ except ImportError:
         for (c1, c2) in zip(count_guess, count_soln):
             incorrect += min(c1, c2)
         return (correct, incorrect)
+    print('Could not import fast check, is Cython installed?')
+    print('Using slow pure Python check function.')
 
 
 class Game:
