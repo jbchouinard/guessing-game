@@ -38,7 +38,7 @@ guessgame-benchmark [best|goood|fast]
 
 ## Strategy
 
-The solver's strategy is to maximizes the expected number of potential solutions
+The solver's strategy is to maximize the expected number of potential solutions
 eliminated by each guess.
 
 This turns out not to be the optimal strategy.
