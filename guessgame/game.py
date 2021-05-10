@@ -1,16 +1,9 @@
-from collections import Counter
 from random import randint
 
-
-class GameFinished(Exception):
-    pass
-
 try:
-    import pyximport
-    pyximport.install()
-    from fastcheck import check
-    print('Using fast check function.')
+    from guessgame.fastcheck import check
 except ImportError:
+
     def check(colors, guess, solution):
         count_guess = [0] * colors
         count_soln = [0] * colors
@@ -19,14 +12,21 @@ except ImportError:
             if color_guessed == color_actual:
                 correct += 1
             else:
-                count_guess[color_guessed-1] += 1
-                count_soln[color_actual-1] += 1
+                count_guess[color_guessed - 1] += 1
+                count_soln[color_actual - 1] += 1
             incorrect = 0
         for (c1, c2) in zip(count_guess, count_soln):
             incorrect += min(c1, c2)
         return (correct, incorrect)
-    print('Could not import fast check, is Cython installed?')
-    print('Using slow pure Python check function.')
+
+    print("Could not import fastcheck, was it built with Cython?")
+    print("You may try building it with: python setup.py build_ext --inplace")
+    print("and re-installing the package.")
+    print("Using slower check function.")
+
+
+class GameFinished(Exception):
+    pass
 
 
 class Game:
@@ -38,8 +38,8 @@ class Game:
         self.guesses = []
 
     def guess(self, guess):
-        if self.state != 'open':
-            raise GameFinished
+        if self.state != "open":
+            raise GameFinished()
         response = check(self.colors, guess, self.solution)
         self.guesses.append((guess, response))
         return response
@@ -50,8 +50,8 @@ class Game:
     @property
     def state(self):
         if self.guesses and self.guesses[-1][0] == self.solution:
-            return 'solved'
+            return "solved"
         elif len(self.guesses) < self.tries:
-            return 'open'
+            return "open"
         else:
-            return 'failed'
+            return "failed"

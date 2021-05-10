@@ -1,11 +1,12 @@
+import argparse
 import itertools
-from sys import argv
+import time
 
-from game import check
+from guessgame.game import check
 
 
 def possible_guesses(game):
-    return itertools.product(range(1, game.colors+1), repeat=game.n)
+    return itertools.product(range(1, game.colors + 1), repeat=game.n)
 
 
 class Solver:
@@ -21,14 +22,10 @@ class Solver:
                 kept.append(soln)
         return kept
 
-    def find_guess(self, treshold, guess_from):
+    def find_guess(self, treshold):
         best_guess = self.possible[0]
         best_n = len(self.possible)
-        if guess_from == 'possible':
-            to_check = self.possible
-        else:
-            to_check = possible_guesses(self.game)
-        for guess in to_check:
+        for guess in self.possible:
             expected_n = self.compute_expected_n_solns(guess)
             if expected_n <= len(self.possible) * treshold:
                 return guess
@@ -45,45 +42,67 @@ class Solver:
             ns.append(len(left))
         return sum(ns) / len(ns)
 
-    def guess(self, treshold=0.5, guess_from='possible'):
+    def guess(self, treshold=0.5):
         # Precomputed best first move
         if self.first_guess:
             if (self.game.n, self.game.colors) == (4, 6):
                 guess = [1, 1, 2, 3]
             else:
-                guess = self.find_guess(treshold, guess_from)
+                guess = self.find_guess(treshold)
             self.first_guess = False
         else:
-            guess = self.find_guess(treshold, guess_from)
+            guess = self.find_guess(treshold)
         response = self.game.guess(list(guess))
         self.possible = self.filter_solutions(self.possible, guess, response)
 
 
-if __name__ == '__main__':
-    from game import Game
+def main():
+    from guessgame.game import Game
 
-    n_guesses = []
+    parser = argparse.ArgumentParser()
+    parser.add_argument("mode", choices=["best", "good", "fast"])
+    args = parser.parse_args()
+
+    treshold = {
+        "best": 0,
+        "good": 1/6,
+        "fast": 1/2,
+    }[args.mode]
+
     game = Game()
+    n_guesses = []
     counter = 1
 
-    for soln in possible_guesses(game):
+    start_time = time.time()
+    permutations = list(possible_guesses(game))
+    ntotal = len(permutations)
+    for i, soln in enumerate(permutations):
+        print("solving game {} of {}".format(i, ntotal))
         game.solution = list(soln)
         game.restart()
 
-        print('Solving game %i %s.' % (counter, soln))
         solver = Solver(game)
-        while game.state == 'open':
-            solver.guess(float(argv[1]), str(argv[2]))
+        while game.state == "open":
+            solver.guess(treshold)
         n = len(game.guesses)
-        if game.state == 'solved':
-            print('Solved in %i guesses.' % n)
+        if game.state == "solved":
             n_guesses.append(n)
         else:
-            print('Failed to solve.')
-            n.guesses.append('F')
+            n.guesses.append("F")
         counter += 1
 
+    elapsed = time.time() - start_time
     avg = sum(n_guesses) / len(n_guesses)
-    with open('n_guesses_%s_%s.txt' % (argv[1], argv[2]), 'w') as f:
-        f.write(','.join((str(n) for n in n_guesses)))
-    print('Solved all in average of %f guesses.' % avg)
+    avg_secs = elapsed / len(n_guesses)
+    print(
+        (
+            "Solved all possible puzzles in average of {:.2f} guesses, "
+            "max of {:d} guesses, average of {:.3f} seconds/puzzle"
+        ).format(avg,  max(n_guesses), avg_secs,)
+    )
+    with open("n_guesses_{}.txt".format(args.mode), "w") as f:
+        f.write(",".join((str(n) for n in n_guesses)))
+
+
+if __name__ == "__main__":
+    main()

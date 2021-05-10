@@ -1,24 +1,26 @@
 from collections import defaultdict
+from tkinter import Tk, Canvas, Frame, Button, N, E, W
 
-from game import Game
-from solver import Solver
-from tkinter import *
+from guessgame.game import Game
+from guessgame.solver import Solver
 
 
 XSCALE = 1
 YSCALE = 1
 
+
 def sx(x):
     return int(XSCALE * x)
+
 
 def sy(y):
     return int(YSCALE * y)
 
 
 options = {
-    'colors': 6,
-    'n': 4,
-    'tries': 10,
+    "colors": 6,
+    "n": 4,
+    "tries": 10,
 }
 
 
@@ -32,28 +34,28 @@ class GameWidget:
     x0 = sx(10)
 
     colors = defaultdict(
-        lambda: 'black',
+        lambda: "black",
         {
             # Pegs
-            0: 'white',
-            1: 'red',
-            2: 'yellow',
-            3: 'green',
-            4: 'blue',
-            5: 'orange',
-            6: 'purple',
+            0: "white",
+            1: "red",
+            2: "yellow",
+            3: "green",
+            4: "blue",
+            5: "orange",
+            6: "purple",
             # Mini pegs
-            'correct': 'black',
-            'incorrect': 'white',
-            'missing': 'grey',
-        }
+            "correct": "black",
+            "incorrect": "white",
+            "missing": "grey",
+        },
     )
 
     def __init__(self, game, frame, legend):
         self.frame = frame
         self.game = game
 
-        mini = ((self.game.n-1) // 4) + 1
+        mini = ((self.game.n - 1) // 4) + 1
         ncols = self.game.n + mini
         nrows = self.game.tries + 1
         h, w = self._compute_canvas_size(nrows, ncols)
@@ -82,7 +84,7 @@ class GameWidget:
 
     def reset_canvas(self):
         self.canvas.destroy()
-        mini = ((self.game.n-1) // 4) + 1
+        mini = ((self.game.n - 1) // 4) + 1
         ncols = self.game.n + mini
         nrows = self.game.tries + 1
         h, w = self._compute_canvas_size(nrows, ncols)
@@ -112,19 +114,23 @@ class GameWidget:
         w = self.width * 0.4
         h = self.height * 0.4
         n = len(values)
-        ncol = (n+1) // 2
+        ncol = (n + 1) // 2
         for i in range(n):
             row = i % ncol
             col = i // ncol
             x = x0 + (w + x_pad) * row
             y = y0 + (h + y_pad) * col
             col = self.colors[values[i]]
-            self.canvas.create_oval(x, y, x+w, y+h, fill=col)
+            self.canvas.create_oval(x, y, x + w, y + h, fill=col)
 
     def draw_legend(self):
         for i in range(self.game.colors):
-            id = self.draw_peg(i, 0, self.colors[i+1], canvas=self.canvas_legend)
-            self.canvas_legend.tag_bind(id, '<ButtonPress-1>', self.on_legend_click)
+            id = self.draw_peg(
+                i, 0, self.colors[i + 1], canvas=self.canvas_legend
+            )
+            self.canvas_legend.tag_bind(
+                id, "<ButtonPress-1>", self.on_legend_click
+            )
 
     def submit_guess(self):
         self.game.guess(self.current_guess)
@@ -146,7 +152,7 @@ class GameWidget:
         for j in range(self.game.n):
             color = self.colors[self.current_guess[j]]
             id = self.draw_peg(i, j, color)
-            self.canvas.tag_bind(id, '<ButtonPress-1>', self.on_entry_click)
+            self.canvas.tag_bind(id, "<ButtonPress-1>", self.on_entry_click)
             self.entries[id] = j
 
     def draw_ok_button(self):
@@ -156,11 +162,13 @@ class GameWidget:
         j = self.game.n
         x, y = self.get_coords(i, j)
         y += self.y_pad / 3
-        self.button_ok = Button(self.frame, text='OK', command=self.submit_guess)
-        self.canvas.create_window(x, y, anchor=N+W, window=self.button_ok)
+        self.button_ok = Button(
+            self.frame, text="OK", command=self.submit_guess
+        )
+        self.canvas.create_window(x, y, anchor=N + W, window=self.button_ok)
 
     def draw(self):
-        self.canvas.delete('all')
+        self.canvas.delete("all")
 
         # draw previous guesses
         for i in range(len(self.game.guesses)):
@@ -170,19 +178,19 @@ class GameWidget:
             a1 = response[0]
             a2 = response[1]
             a3 = self.game.n - a1 - a2
-            vals = ['correct'] * a1 + ['incorrect'] * a2 + ['missing'] * a3
+            vals = ["correct"] * a1 + ["incorrect"] * a2 + ["missing"] * a3
             self.draw_mini_pegs(i, self.game.n, vals)
 
         # draw current guess
         i = len(self.game.guesses)
-        if self.game.state != 'open':
+        if self.game.state != "open":
             self.show_solution = True
 
         if i < self.game.tries:
             if self.show_solution:
                 for j in range(self.game.n):
-                    self.draw_peg(i, j, 'grey')
-                self.draw_mini_pegs(i, self.game.n, ['missing'] * self.game.n)
+                    self.draw_peg(i, j, "grey")
+                self.draw_mini_pegs(i, self.game.n, ["missing"] * self.game.n)
             else:
                 self.draw_entries()
                 self.draw_ok_button()
@@ -190,16 +198,16 @@ class GameWidget:
         # draw empty guesses remaining
         for i in range(len(self.game.guesses) + 1, self.game.tries):
             for j in range(self.game.n):
-                self.draw_peg(i, j, 'grey')
-            self.draw_mini_pegs(i, self.game.n, ['missing'] * self.game.n)
+                self.draw_peg(i, j, "grey")
+            self.draw_mini_pegs(i, self.game.n, ["missing"] * self.game.n)
 
-        self.draw_hline(self.game.tries, 0, self.game.n, 'black')
+        self.draw_hline(self.game.tries, 0, self.game.n, "black")
 
         # draw solution
         sol = self.show_solution
         i = self.game.tries
         for j in range(self.game.n):
-            color = self.colors[self.game.solution[j]] if sol else 'grey'
+            color = self.colors[self.game.solution[j]] if sol else "grey"
             self.draw_peg(i, j, color)
 
     def on_legend_click(self, event):
@@ -212,7 +220,7 @@ class GameWidget:
         self.draw_entries()
 
 
-if __name__ == '__main__':
+def main():
     root = Tk()
     game = Game(**options)
 
@@ -243,31 +251,50 @@ if __name__ == '__main__':
             if game_widget.button_ok:
                 game_widget.button_ok.destroy()
             solver = Solver(game)
-            while game.state == 'open':
+            while game.state == "open":
                 solver.guess(treshold)
                 game_widget.draw()
+
         return solve_f
 
     # Menu
     menu = Frame(root)
-    button_new_game = Button(menu, text='New Game', width=sx(20), command=new_game)
-    button_restart = Button(menu, text='Restart', width=sx(20), command=restart)
-    button_solution = Button(menu, text='Show Solution', width=sx(20), command=show_solution)
-    button_solve_fast = Button(menu, text='Solve (Fast)', width=sx(20), command=solve(0.5))
-    button_solve_best = Button(menu, text='Solve (Best)', width=sx(20), command=solve(0))
-    button_quit = Button(menu, text='Quit', width=sx(20), command=quit)
+    button_new_game = Button(
+        menu, text="New Game", width=sx(20), command=new_game
+    )
+    button_restart = Button(
+        menu, text="Restart", width=sx(20), command=restart
+    )
+    button_solution = Button(
+        menu, text="Show Solution", width=sx(20), command=show_solution
+    )
+    button_solve_fast = Button(
+        menu, text="Solve (Fast)", width=sx(20), command=solve(1/2)
+    )
+    button_solve_good = Button(
+        menu, text="Solve (Good)", width=sx(20), command=solve(1/6)
+    )
+    button_solve_best = Button(
+        menu, text="Solve (Best)", width=sx(20), command=solve(0)
+    )
+    button_quit = Button(menu, text="Quit", width=sx(20), command=quit)
 
     # Frames Layout
-    menu.grid(row=0, column=0, sticky=N+W, pady=sy(20), padx=sx(20))
-    legend_frame.grid(row=1, column=0, sticky=N+E, pady=sy(20), padx=sx(20))
+    menu.grid(row=0, column=0, sticky=N + W, pady=sy(20), padx=sx(20))
+    legend_frame.grid(row=1, column=0, sticky=N + E, pady=sy(20), padx=sx(20))
     game_frame.grid(row=0, column=1, rowspan=2)
 
     # Menu Layout
-    button_new_game.grid(row=0, column=0, sticky=N+W)
-    button_restart.grid(row=1, column=0, sticky=N+W)
-    button_solution.grid(row=2, column=0, sticky=N+W)
-    button_solve_fast.grid(row=3, column=0, sticky=N+W)
-    button_solve_best.grid(row=4, column=0, sticky=N+W)
-    button_quit.grid(row=5, column=0, sticky=N+W)
+    button_new_game.grid(row=0, column=0, sticky=N + W)
+    button_restart.grid(row=1, column=0, sticky=N + W)
+    button_solution.grid(row=2, column=0, sticky=N + W)
+    button_solve_fast.grid(row=3, column=0, sticky=N + W)
+    button_solve_good.grid(row=4, column=0, sticky=N + W)
+    button_solve_best.grid(row=5, column=0, sticky=N + W)
+    button_quit.grid(row=6, column=0, sticky=N + W)
 
     root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
