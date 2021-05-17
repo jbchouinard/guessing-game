@@ -33,7 +33,7 @@ guessgame
 Run solver benchmark:
 
 ```bash
-guessgame-benchmark [best|goood|fast]
+guessgame-benchmark [best|good|fast]
 ```
 
 ## Strategy
